@@ -28,15 +28,65 @@ End Function
 
 Rem 单击检查
 Sub Check_Click()
+    msg = Check()
+    If msg = "" Then
+        MsgBox "检查通过"
+    Else
+        MsgBox msg
+    End If
+End Sub
+
+Rem 检查
+Function Check()
     For r = 2 To Worksheets("check").UsedRange.Rows.Count
         For c = 1 To Worksheets("check").UsedRange.Columns.Count
             v = Worksheets("check").Cells(r, c).Value
             If Not v = "" Then
-                MsgBox "Row: " + Str(r) + " Col: " + Str(c) + Chr(13) + Chr(10) + "检查不通过，值为：" + v
-                Exit Sub
+                Check = "Row: " + Str(r) + " Col: " + Str(c) + Chr(13) + Chr(10) + "检查不通过，值为：" + v
+                Exit Function
             End If
         Next
     Next
+    Check = ""
+End Function
+
+
+Rem 单击检查所有配置
+Sub CheckAll_Click()
+    f = Dir(ThisWorkbook.Path + "\*.xlsm")
+    Do While f <> ""
+        If f = "" Then
+            Exit Do
+        End If
+        
+        Rem 自己
+        Dim msg As String
+        If Application.ActiveWorkbook.Name = f Then
+            msg = Check()
+        Else
+            
+            Dim xlApp
+            Dim xlBook
+
+            Set xlApp = CreateObject("Excel.Application")
+            Set xlBook = xlApp.Workbooks.Open(ThisWorkbook.Path & "\" & f, 3)
+            xlApp.Application.Visible = False
+            xlBook.RefreshAll
+            msg = xlApp.Application.Run("Check")
+            xlBook.Save
+            xlBook.Close
+            xlApp.Quit
+
+            Set xlBook = Nothing
+            Set xlApp = Nothing
+            
+        End If
+        
+        If msg <> "" Then
+            MsgBox "文件 " + f + " 检查不通过" + Chr(13) + Chr(10) + msg
+            Exit Sub
+        End If
+        f = Dir
+    Loop
     MsgBox "检查通过"
 End Sub
-
