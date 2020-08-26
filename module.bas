@@ -71,7 +71,8 @@ Sub CheckAll_Click()
             Set xlApp = CreateObject("Excel.Application")
             Set xlBook = xlApp.Workbooks.Open(ThisWorkbook.Path & "\" & f, 3)
             xlApp.Application.Visible = False
-            xlBook.RefreshAll
+            xlApp.DisplayAlerts = False
+            xlBook.SaveLinkValues = True
             msg = xlApp.Application.Run("Check")
             xlBook.Save
             xlBook.Close
