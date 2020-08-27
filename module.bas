@@ -53,41 +53,77 @@ End Function
 
 Rem 单击检查所有配置
 Sub CheckAll_Click()
+
+    Dim errnum As Integer
     f = Dir(ThisWorkbook.Path + "\*.xlsm")
     Do While f <> ""
         If f = "" Then
             Exit Do
         End If
-        
-        Rem 自己
-        Dim msg As String
-        If Application.ActiveWorkbook.Name = f Then
-            msg = Check()
-        Else
-            
-            Dim xlApp
-            Dim xlBook
-
-            Set xlApp = CreateObject("Excel.Application")
-            Set xlBook = xlApp.Workbooks.Open(ThisWorkbook.Path & "\" & f, 3)
-            xlApp.Application.Visible = False
-            xlApp.DisplayAlerts = False
-            xlBook.SaveLinkValues = True
-            msg = xlApp.Application.Run("Check")
-            xlBook.Save
-            xlBook.Close
-            xlApp.Quit
-
-            Set xlBook = Nothing
-            Set xlApp = Nothing
-            
+         
+        If checkOneFile(f) = False Then
+            errnum = errnum + 1
         End If
-        
-        If msg <> "" Then
-            MsgBox "文件 " + f + " 检查不通过" + Chr(13) + Chr(10) + msg
-            Exit Sub
-        End If
+       
         f = Dir
     Loop
-    MsgBox "检查通过"
+    MsgBox "错误文件数：" + Str(errnum)
 End Sub
+
+
+
+Function checkOneFile(f As Variant)
+
+    Dim xlApp
+    Dim xlBook
+    Dim msg As String
+    If Application.ActiveWorkbook.Name = f Then
+        msg = Check()
+    Else
+
+        Set xlApp = CreateObject("Excel.Application")
+        Set xlBook = xlApp.Workbooks.Open(ThisWorkbook.Path & "\" & f, 3)
+        xlApp.Application.Visible = False
+        xlApp.DisplayAlerts = False
+        xlBook.SaveLinkValues = True
+        
+        On Error GoTo MyErr
+        msg = xlApp.Application.Run("Check")
+        On Error GoTo 0
+        
+        xlBook.Save
+        xlBook.Close
+        xlApp.Quit
+
+        Set xlBook = Nothing
+        Set xlApp = Nothing
+            
+    End If
+    
+    checkOneFile = True
+    If msg <> "" Then
+        MsgBox "文件 " + f + " 检查不通过" + Chr(13) + Chr(10) + msg
+        checkOneFile = False
+        Exit Function
+    End If
+    Exit Function
+    
+MyErr:
+
+    msg = "文件 " + f + " 错误 " & Err.Number & " ： " & Err.Description
+    MsgBox msg
+    
+    xlBook.Close
+    xlApp.Quit
+    Set xlBook = Nothing
+    Set xlApp = Nothing
+    
+    checkOneFile = False
+    Exit Function
+    
+End Function
+
+
+
+
+
